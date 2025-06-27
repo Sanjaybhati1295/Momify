@@ -3,7 +3,7 @@ const http = require('http');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 ffmpeg.setFfmpegPath(ffmpegPath);
-
+const fetch = require('node-fetch');
 const fs = require('fs');
 const { exec } = require('child_process');
 
@@ -39,7 +39,7 @@ wss.on('connection', function connection(ws) {
                 fetch('https://api-inference.huggingface.co/models/facebook/bart-large-cnn', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer YOUR_HF_API_KEY`,
+                        'Authorization': `Bearer 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`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ inputs: text })
