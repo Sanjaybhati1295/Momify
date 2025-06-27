@@ -57,6 +57,9 @@ wss.on('connection', function connection(ws) {
     });
 });
 
-server.listen(3000, () => {
-    console.log('Server started on port 3000');
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
+  console.log(`Server started on port ${PORT}`);
 });
