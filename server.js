@@ -7,7 +7,11 @@ const fetch = require('node-fetch');
 const fs = require('fs');
 const { exec } = require('child_process');
 
-const server = http.createServer();
+const server = http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end('WebSocket server running');
+  });
+  
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', function connection(ws) {
