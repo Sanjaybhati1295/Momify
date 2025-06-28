@@ -39,12 +39,12 @@ wss.on('connection', function connection(clientSocket) {
   });
 
   clientSocket.on('message', (msg) => {
+    console.log('message from client ::'+msg);
     if (Buffer.isBuffer(msg)) {
       console.log('📦 Sending buffer to Deepgram:', msg.length);
-      if (dgSocket.readyState === WebSocket.OPEN) {
-        dgSocket.send(msg);
-      }
+      dgSocket.send(msg);
     } else {
+      console.log('Its not buffere in client side audio.');
       try {
         const parsed = JSON.parse(msg.toString());
         if (parsed.type === 'end') {
@@ -57,6 +57,7 @@ wss.on('connection', function connection(clientSocket) {
   });
 
   clientSocket.on('close', () => {
+    console.log('socket closed');
     dgSocket.close();
   });
 });
