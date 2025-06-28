@@ -38,6 +38,10 @@ wss.on('connection', function connection(clientSocket) {
     }
   });
 
+  dgSocket.on('error', (err) => {
+    console.error('❌ Deepgram WebSocket error:', err);
+  });
+
   clientSocket.on('message', (msg) => {
     console.log('📦 Received chunk:', typeof msg, Buffer.isBuffer(msg), msg.length);
     // Check if it's a Buffer or a string
@@ -61,6 +65,10 @@ wss.on('connection', function connection(clientSocket) {
 
   clientSocket.on('close', () => {
     dgSocket.close();
+  });
+
+  clientSocket.on('error', (err) => {
+    console.error('❌ Client socket error:', err);
   });
 });
 
