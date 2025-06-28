@@ -42,6 +42,11 @@ wss.on('connection', function connection(clientSocket) {
     console.error('❌ Deepgram WebSocket error:', err);
   });
 
+    
+  dgSocket.on('close', (code, reason) => {
+    console.log(`🔌 Deepgram closed: ${code} - ${reason}`);
+  });
+
   clientSocket.on('message', (msg) => {
     console.log('📦 Received chunk:', typeof msg, Buffer.isBuffer(msg), msg.length);
     // Check if it's a Buffer or a string
