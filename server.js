@@ -24,14 +24,19 @@ wss.on('connection', function connection(clientSocket) {
 
   dgSocket.on('message', (message) => {
     try {
+      console.log('message in deepgram '+message);
       const data = JSON.parse(message);
+      console.log('data in deepgram '+data);
       const transcript = data.channel?.alternatives?.[0]?.transcript;
-      if (transcript && !data.is_final) {
-        console.log('🟡 Partial:', transcript);
-        clientSocket.send(JSON.stringify({ type: 'partial', text: transcript }));
-      } else if (transcript && data.is_final) {
-        console.log('✅ Final:', transcript);
-        clientSocket.send(JSON.stringify({ type: 'final', text: transcript }));
+      console.log('transcript in deepgram '+transcript);
+      if (transcript && transcript.length > 0) {
+        if (data.is_final) {
+          console.log('✅ Final:', transcript);
+          clientSocket.send(JSON.stringify({ type: 'final', text: transcript }));
+        } else {
+          console.log('⏳ Partial:', transcript);
+          clientSocket.send(JSON.stringify({ type: 'partial', text: transcript }));
+        }
       }
     } catch (err) {
       console.error('❌ Deepgram JSON error', err);
