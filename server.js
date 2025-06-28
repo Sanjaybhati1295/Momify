@@ -13,7 +13,7 @@ wss.on('connection', function connection(clientSocket) {
   console.log('🎙 Client connected');
 
   // Connect to Deepgram real-time API
-  const dgSocket = new WebSocket(`wss://api.deepgram.com/v1/listen`, [], {
+  const dgSocket = new WebSocket(`wss://api.deepgram.com/v1/listen?punctuate=true&language=en&encoding=opus&sample_rate=48000`, [], {
     headers: {
       Authorization: `Token e0c027bfdf8c501bdafb7b30ec02046db652a315`,
     }
