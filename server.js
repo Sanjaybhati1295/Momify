@@ -24,6 +24,7 @@ wss.on('connection', function connection(clientSocket) {
   });
 
   dgSocket.on('message', (message) => {
+    console.log('🧾 Raw Deepgram message:', message);
     const data = JSON.parse(message);
     console.log('data '+JSON.stringify(data));
     const transcript = data.channel?.alternatives[0]?.transcript;
@@ -38,6 +39,7 @@ wss.on('connection', function connection(clientSocket) {
   });
 
   clientSocket.on('message', (msg) => {
+    console.log('📦 Received chunk:', typeof msg, Buffer.isBuffer(msg), msg.length);
     // Check if it's a Buffer or a string
     if (Buffer.isBuffer(msg)) {
       // ✅ Audio chunk: send directly to Deepgram
