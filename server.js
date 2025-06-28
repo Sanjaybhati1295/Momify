@@ -37,15 +37,22 @@ wss.on('connection', function connection(clientSocket) {
   });
 
   clientSocket.on('message', (msg) => {
-    const parsed = JSON.parse(msg);
-
-    if (parsed.type === 'audio') {
-      const audioBuffer = Buffer.from(parsed.data, 'base64');
-      dgSocket.send(audioBuffer);
-    }
-
-    if (parsed.type === 'end') {
-      dgSocket.close();
+    // Check if it's a Buffer or a string
+    if (Buffer.isBuffer(msg)) {
+      // ✅ Audio chunk: send directly to Deepgram
+      if (dgSocket.readyState === WebSocket.OPEN) {
+        dgSocket.send(msg);
+      }
+    } else {
+      // 🟡 Check for JSON 'end' signal (optional)
+      try {
+        const parsed = JSON.parse(msg.toString());
+        if (parsed.type === 'end') {
+          dgSocket.close();
+        }
+      } catch (e) {
+        console.warn('⚠️ Invalid non-binary message received:', msg.toString());
+      }
     }
   });
 
