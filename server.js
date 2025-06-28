@@ -1,69 +1,60 @@
 const WebSocket = require('ws');
 const http = require('http');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
-ffmpeg.setFfmpegPath(ffmpegPath);
-const fetch = require('node-fetch');
-const fs = require('fs');
-const { exec } = require('child_process');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const server = http.createServer((req, res) => {
-    res.writeHead(200);
-    res.end('WebSocket server running');
-  });
-  
+  res.writeHead(200);
+  res.end('Deepgram WebSocket Transcriber');
+});
+
 const wss = new WebSocket.Server({ server });
 
-wss.on('connection', function connection(ws) {
-    console.log('Client connected');
+wss.on('connection', function connection(clientSocket) {
+  console.log('🎙 Client connected');
 
-    let audioBuffer = [];
+  // Connect to Deepgram real-time API
+  const dgSocket = new WebSocket(`wss://api.deepgram.com/v1/listen`, [], {
+    headers: {
+      Authorization: `Token e0c027bfdf8c501bdafb7b30ec02046db652a315`,
+    }
+  });
 
-    ws.on('message', function incoming(message) {
-        const data = JSON.parse(message);
-        if (data.type === 'audio') {
-            const buffer = Buffer.from(data.data, 'base64');
-            audioBuffer.push(buffer);
-        }
-        if (data.type === 'end') {
-            const output = './output.wav';
-            fs.writeFileSync(output, Buffer.concat(audioBuffer));
+  dgSocket.on('open', () => {
+    console.log('🔗 Connected to Deepgram');
+  });
 
-            console.log('Audio saved. Running transcription...');
+  dgSocket.on('message', (message) => {
+    const data = JSON.parse(message);
+    const transcript = data.channel?.alternatives[0]?.transcript;
 
-            // Call whisper or vosk here (shell-based or local)
-            exec(`whisper ${output} --language English --output_format txt`, (err, stdout, stderr) => {
-                if (err) {
-                    ws.send(JSON.stringify({ type: 'error', message: 'Transcription failed' }));
-                    return;
-                }
-                const text = fs.readFileSync('./output.txt', 'utf8');
+    if (transcript && !data.is_final) {
+      clientSocket.send(JSON.stringify({ type: 'partial', text: transcript }));
+    }
 
-                // Basic summarization using Hugging Face API (or local model)
-                fetch('https://api-inference.huggingface.co/models/facebook/bart-large-cnn', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer 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`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ inputs: text })
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        ws.send(JSON.stringify({
-                            type: 'summary',
-                            transcription: text,
-                            summary: data[0]?.summary_text || 'Summary unavailable'
-                        }));
-                    });
-            });
-        }
-    });
+    if (transcript && data.is_final) {
+      clientSocket.send(JSON.stringify({ type: 'final', text: transcript }));
+    }
+  });
+
+  clientSocket.on('message', (msg) => {
+    const parsed = JSON.parse(msg);
+
+    if (parsed.type === 'audio') {
+      const audioBuffer = Buffer.from(parsed.data, 'base64');
+      dgSocket.send(audioBuffer);
+    }
+
+    if (parsed.type === 'end') {
+      dgSocket.close();
+    }
+  });
+
+  clientSocket.on('close', () => {
+    dgSocket.close();
+  });
 });
 
 const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0';
-
-server.listen(PORT, HOST, () => {
-  console.log(`Server started on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 WebSocket server running on port ${PORT}`);
 });
