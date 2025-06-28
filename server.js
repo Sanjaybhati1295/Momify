@@ -25,8 +25,9 @@ wss.on('connection', function connection(clientSocket) {
 
   dgSocket.on('message', (message) => {
     const data = JSON.parse(message);
+    console.log('data '+JSON.stringify(data));
     const transcript = data.channel?.alternatives[0]?.transcript;
-
+    console.log('transcript '+JSON.stringify(transcript));
     if (transcript && !data.is_final) {
       clientSocket.send(JSON.stringify({ type: 'partial', text: transcript }));
     }
