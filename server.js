@@ -9,7 +9,7 @@ wss.on('connection', function connection(clientSocket) {
 
   // Connect to Deepgram
   const dgSocket = new WebSocket(
-    'wss://api.deepgram.com/v1/listen?punctuate=true&language=en&encoding=opus&sample_rate=48000',
+    'wss://api.deepgram.com/v1/listen?punctuate=true&language=en&encoding=webm&sample_rate=48000',
     [],
     {
       headers: {
