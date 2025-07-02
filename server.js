@@ -21,6 +21,14 @@ wss.on('connection', function connection(clientSocket) {
     console.log('🔗 Connected to Deepgram');
   });
 
+  dgSocket.on('error', (err) => {
+    console.error('❌ Deepgram socket error:', err.message || err);
+  });
+  
+  dgSocket.on('close', (code, reason) => {
+    console.warn(`🔌 Deepgram connection closed: [${code}] ${reason}`);
+  });
+
   dgSocket.on('message', (message) => {
     try {
       console.log('message in deepgram '+message);
