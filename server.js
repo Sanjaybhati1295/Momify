@@ -2,7 +2,10 @@ const WebSocket = require('ws');
 const http = require('http');
 require('dotenv').config();
 const { OpenAI } = require('openai');  // npm install openai
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY,
+  project: process.env.OPENAI_PROJECT_ID
+});
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
 
