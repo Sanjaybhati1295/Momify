@@ -1,12 +1,13 @@
 const WebSocket = require('ws');
 const http = require('http');
-
+const { OpenAI } = require('openai');  // npm install openai
+const openai = new OpenAI({ apiKey: 'sk-xxx' });
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', function connection(clientSocket) {
   console.log('🎙 Client connected');
-
+  let fullTranscript = '';  
   // Connect to Deepgram
   const dgSocket = new WebSocket(
     'wss://api.deepgram.com/v1/listen',
@@ -39,6 +40,7 @@ wss.on('connection', function connection(clientSocket) {
       console.log('transcript in deepgram '+transcript);
       if (transcript && transcript.length > 0) {
         if (data.is_final) {
+          fullTranscript += transcript + ' ';
           console.log('✅ Final:', transcript);
           clientSocket.send(JSON.stringify({ type: 'final', text: transcript }));
         } else {
@@ -72,8 +74,26 @@ wss.on('connection', function connection(clientSocket) {
   clientSocket.on('close', () => {
     console.log('socket closed');
     dgSocket.close();
+    generateSummary(fullTranscript).then(summary => {
+      console.log('📝 Meeting Summary:', summary);
+      clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
+    });
   });
 });
+
+async function generateSummary(transcript) {
+  const prompt = `Summarize this meeting in clear bullet points:\n\n${transcript}`;
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-3.5-turbo', // or 'gpt-4'
+    messages: [
+      { role: 'system', content: 'You are a helpful meeting summarizer.' },
+      { role: 'user', content: prompt }
+    ],
+    temperature: 0.3,
+  });
+
+  return completion.choices[0].message.content.trim();
+}
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
