@@ -3,7 +3,7 @@ const http = require('http');
 require('dotenv').config();
 const { OpenAI } = require('openai');  // npm install openai
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: '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'
 });
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
