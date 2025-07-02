@@ -9,10 +9,11 @@ wss.on('connection', function connection(clientSocket) {
 
   // Connect to Deepgram
   const dgSocket = new WebSocket(
-    'wss://api.deepgram.com/v1/listen?encoding=webm&sample_rate=48000&punctuate=true&language=en',
+    'wss://api.deepgram.com/v1/listen',
+    [],
     {
       headers: {
-        Authorization: `Token e0c027bfdf8c501bdafb7b30ec02046db652a315`
+        Authorization: 'Token e0c027bfdf8c501bdafb7b30ec02046db652a315',
       }
     }
   );
