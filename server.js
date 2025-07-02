@@ -69,6 +69,16 @@ wss.on('connection', function connection(clientSocket) {
         const parsed = JSON.parse(msg.toString());
         if (parsed.type === 'end') {
           dgSocket.close();
+          setTimeout(() => {
+            console.log('🔚 Final full transcript:', fullTranscript);
+            generateSummary(fullTranscript).then(summary => {
+              console.log('📝 Meeting Summary:', summary);
+              clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
+            }).catch(err => {
+              console.error('❌ Summary generation error:', err);
+              clientSocket.send(JSON.stringify({ type: 'summary', text: 'Failed to generate summary' }));
+            });
+          }, 1000);
         }
       } catch (e) {
         console.warn('⚠️ Non-binary message:', msg.toString());
