@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const http = require('http');
 require('dotenv').config();
+const axios = require('axios');
 const { OpenAI } = require('openai');  // npm install openai
 const openai = new OpenAI({ 
   apiKey: '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'
@@ -95,17 +96,25 @@ wss.on('connection', function connection(clientSocket) {
 });
 
 async function generateSummary(transcript) {
-  const prompt = `Summarize this meeting in clear bullet points:\n\n${transcript}`;
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo', // or 'gpt-4'
-    messages: [
-      { role: 'system', content: 'You are a helpful meeting summarizer.' },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.3,
-  });
+  const prompt = `Summarize this meeting:\n\n${transcript}`;
+  const response = await axios.post(
+    'https://api.openai.com/v1/chat/completions',
+    {
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You are a helpful summarizer.' },
+        { role: 'user', content: prompt }
+      ]
+    },
+    {
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
 
-  return completion.choices[0].message.content.trim();
+  return response.data.choices[0].message.content.trim();
 }
 
 const PORT = process.env.PORT || 3000;
