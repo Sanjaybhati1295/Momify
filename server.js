@@ -63,7 +63,7 @@ wss.on('connection', function connection(clientSocket) {
     }
   });
 
-  clientSocket.on('message', (msg) => {
+  /*clientSocket.on('message', (msg) => {
     console.log('message from client ::'+msg);
     if (Buffer.isBuffer(msg)) {
       console.log('📦 Sending buffer to Deepgram:', msg.length);
@@ -88,6 +88,51 @@ wss.on('connection', function connection(clientSocket) {
       } catch (e) {
         console.warn('⚠️ Non-binary message:', msg.toString());
       }
+    }
+  });*/
+
+  clientSocket.on('message', (msg) => {
+    try {
+      let messageString = msg;
+  
+      if (Buffer.isBuffer(msg)) {
+        messageString = msg.toString('utf8'); // Convert buffer to string
+      }
+  
+      console.log('message from client ::', messageString);
+  
+      try {
+        const parsed = JSON.parse(messageString);
+  
+        // If it's a control message like end
+        if (parsed.type === 'end') {
+          console.log('📴 End message received. Closing Deepgram socket...');
+          dgSocket.close();
+  
+          setTimeout(() => {
+            console.log('🔚 Final full transcript:', fullTranscript);
+            generateSummary(fullTranscript).then(summary => {
+              console.log('📝 Meeting Summary:', summary);
+              clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
+            }).catch(err => {
+              console.error('❌ Summary generation error:', err);
+              clientSocket.send(JSON.stringify({ type: 'summary', text: 'Failed to generate summary' }));
+            });
+          }, 1000);
+  
+          return; // stop processing
+        }
+      } catch (jsonErr) {
+        // Not JSON => treat as audio buffer
+      }
+  
+      if (Buffer.isBuffer(msg)) {
+        console.log('📦 Sending buffer to Deepgram:', msg.length);
+        dgSocket.send(msg);
+      }
+  
+    } catch (err) {
+      console.error('❌ Error in clientSocket.on(message):', err);
     }
   });
 
