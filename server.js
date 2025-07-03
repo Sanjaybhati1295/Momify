@@ -36,7 +36,7 @@ const server = http.createServer((req, res) => {
       '.html': 'text/html',
       '.js': 'application/javascript',
       '.css': 'text/css'
-    };
+    }[ext] || 'text/plain';
 
     res.writeHead(200, {
       'Content-Type': contentTypeMap[ext] || 'text/plain',
