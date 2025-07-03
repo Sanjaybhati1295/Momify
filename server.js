@@ -103,7 +103,7 @@ wss.on('connection', function connection(clientSocket) {
 });
 
 
-const summarizer = await hfPipeline('summarization', 'Xenova/flan-t5-large'); // or any other MoM-focused model
+const summarizer = await hfPipeline('summarization', 'Xenova/distilbart-cnn-12-6'); // or any other MoM-focused model
 async function generateSummary(transcript) {
   const prompt = `
   Transcript:
