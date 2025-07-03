@@ -3,7 +3,7 @@ const http = require('http');
 require('dotenv').config();
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
-const { pipeline } = require('@xenova/transformers');
+/*const { pipeline } = require('@xenova/transformers');
 // Load model once globally
 let summarizer;
 (async () => {
@@ -14,7 +14,7 @@ let summarizer;
     console.error('❌ Failed to load summarizer:', err);
   }
 })();
-
+*/
 
 wss.on('connection', function connection(clientSocket) {
   console.log('🎙 Client connected');
@@ -75,7 +75,7 @@ wss.on('connection', function connection(clientSocket) {
         const parsed = JSON.parse(msg.toString());
         if (parsed.type === 'end') {
           dgSocket.close();
-          setTimeout(() => {
+          /*setTimeout(() => {
             console.log('🔚 Final full transcript:', fullTranscript);
             generateSummary(fullTranscript).then(summary => {
               console.log('📝 Meeting Summary:', summary);
@@ -83,8 +83,8 @@ wss.on('connection', function connection(clientSocket) {
             }).catch(err => {
               console.error('❌ Summary generation error:', err);
               clientSocket.send(JSON.stringify({ type: 'summary', text: 'Failed to generate summary' }));
-            });
-          }, 1000);
+            });*
+          }, 1000);*/
         }
       } catch (e) {
         console.warn('⚠️ Non-binary message:', msg.toString());
@@ -95,14 +95,14 @@ wss.on('connection', function connection(clientSocket) {
   clientSocket.on('close', () => {
     console.log('socket closed');
     dgSocket.close();
-    generateSummary(fullTranscript).then(summary => {
+    /*generateSummary(fullTranscript).then(summary => {
       console.log('📝 Meeting Summary: in close', summary);
       clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
-    });
+    });*/
   });
 });
 
-async function generateSummary(transcript) {
+/* async function generateSummary(transcript) {
   if (!summarizer) {
     console.warn('⚠️ Summarizer not ready yet');
     return 'Summarizer not ready';
@@ -116,7 +116,7 @@ async function generateSummary(transcript) {
     console.error('❌ Error summarizing:', err.message || err);
     return 'Summary generation failed';
   }
-}
+} */
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
