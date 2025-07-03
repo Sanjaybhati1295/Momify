@@ -85,7 +85,6 @@ wss.on('connection', function connection(clientSocket) {
         
       }
       if (Buffer.isBuffer(msg)) {
-        console.log('📦 Sending buffer to Deepgram:', msg.length);
         dgSocket.send(msg);
       }
     } catch (err) {
@@ -100,9 +99,9 @@ wss.on('connection', function connection(clientSocket) {
 });
 
 
-const summarizer = await hfPipeline('summarization', 'Xenova/distilbart-cnn-12-6'); // or any other MoM-focused model
+const summarizer = await hfPipeline('summarization', 'Xenova/t5-small'); // or any other MoM-focused model
 async function generateSummary(transcript) {
-  const prompt = `Transcript:`+transcript+` Generate a concise and structured meeting summary highlighting decisions and next steps:`;
+  const prompt = `summarize this meeting transcript with action points and decisions: ${transcript}`;
   const output = await summarizer(prompt, { max_new_tokens: 100 });
   return output[0].summary_text;
 }
