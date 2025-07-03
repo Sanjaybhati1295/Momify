@@ -21,33 +21,26 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ status: 'ok' }));
     return;
   } 
-  // Static file handling
-  const filePath = path.join(
-    __dirname,
-    'public',
-    req.url === '/' ? 'index.html' : req.url
-  );
+  
+  let filePath = path.join(__dirname, 'public', req.url === '/' ? 'index.html' : req.url);
+  let ext = path.extname(filePath).toLowerCase();
 
-  try {
-    const data = fs.readFile(filePath);
-    const ext = path.extname(filePath).toLowerCase();
+  let contentType = {
+    '.html': 'text/html',
+    '.css': 'text/css',
+    '.js': 'application/javascript',
+  }[ext] || 'text/plain';
 
-    const contentTypeMap = {
-      '.html': 'text/html',
-      '.js': 'application/javascript',
-      '.css': 'text/css'
-    }[ext] || 'text/plain';
-
-    res.writeHead(200, {
-      'Content-Type': contentTypeMap[ext] || 'text/plain',
-    });
-    res.end(data);
-    } catch (err) {
-      if (!res.headersSent) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('404 Not Found');
-      }
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      res.end('404 Not Found');
+      return;
     }
+
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(data);
+  });
 });
 
 const wss = new WebSocketServer({ server });
