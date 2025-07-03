@@ -4,19 +4,16 @@ require('dotenv').config();
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
 const axios = require('axios');
-
-/*const { pipeline } = require('@xenova/transformers');
-// Load model once globally
+import { pipeline } from '@xenova/transformers';
 let summarizer;
-(async () => {
-  try {
-    summarizer = await pipeline('summarization', 'Xenova/bart-large-cnn');
-    console.log('🧠 Summarizer model loaded');
-  } catch (err) {
-    console.error('❌ Failed to load summarizer:', err);
-  }
-})();
-*/
+
+export async function loadSummarizerModel() {
+  console.log('⏳ Loading summarization model...');
+  summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-12-6');
+  console.log('✅ Summarization model loaded.');
+}
+await loadSummarizerModel(); 
+
 
 wss.on('connection', function connection(clientSocket) {
   console.log('🎙 Client connected');
@@ -63,34 +60,6 @@ wss.on('connection', function connection(clientSocket) {
     }
   });
 
-  /*clientSocket.on('message', (msg) => {
-    console.log('message from client ::'+msg);
-    if (Buffer.isBuffer(msg)) {
-      console.log('📦 Sending buffer to Deepgram:', msg.length);
-      dgSocket.send(msg);
-    } else {
-      console.log('Its not buffere in client side audio.');
-      try {
-        const parsed = JSON.parse(msg.toString());
-        if (parsed.type === 'end') {
-          dgSocket.close();
-          setTimeout(() => {
-            console.log('🔚 Final full transcript:', fullTranscript);
-            generateSummary(fullTranscript).then(summary => {
-              console.log('📝 Meeting Summary:', summary);
-              clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
-            }).catch(err => {
-              console.error('❌ Summary generation error:', err);
-              clientSocket.send(JSON.stringify({ type: 'summary', text: 'Failed to generate summary' }));
-            });
-          }, 1000);
-        }
-      } catch (e) {
-        console.warn('⚠️ Non-binary message:', msg.toString());
-      }
-    }
-  });*/
-
   clientSocket.on('message', (msg) => {
     try {
       let messageString = msg;
@@ -111,13 +80,9 @@ wss.on('connection', function connection(clientSocket) {
   
           setTimeout(() => {
             console.log('🔚 Final full transcript:', fullTranscript);
-            generateSummary(fullTranscript).then(summary => {
-              console.log('📝 Meeting Summary:', summary);
-              clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
-            }).catch(err => {
-              console.error('❌ Summary generation error:', err);
-              clientSocket.send(JSON.stringify({ type: 'summary', text: 'Failed to generate summary' }));
-            });
+            const summary = await generateSummary(fullTranscript);
+            console.log('📝 Meeting Summary:', summary);
+            clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
           }, 1000);
   
           return; // stop processing
@@ -142,37 +107,14 @@ wss.on('connection', function connection(clientSocket) {
   });
 });
 
-async function generateSummary(transcript) {
-  console.log('Generate Summary called');
-  const response = await axios.post(
-    'https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6',
-    { inputs: transcript },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.HF_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-
-  return response.data[0]?.summary_text || 'Summary not available';
-}
-
-/* async function generateSummary(transcript) {
+export async function generateSummary(text) {
   if (!summarizer) {
-    console.warn('⚠️ Summarizer not ready yet');
-    return 'Summarizer not ready';
+    throw new Error('Summarizer model not loaded.');
   }
 
-  try {
-    const prompt = `Generate Minutes of Meeting (MoM) from the following transcript:\n\n${transcript}`;
-    const output = await summarizer(prompt);
-    return output[0].summary_text;
-  } catch (err) {
-    console.error('❌ Error summarizing:', err.message || err);
-    return 'Summary generation failed';
-  }
-} */
+  const result = await summarizer(text);
+  return result[0].summary_text;
+}
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
