@@ -1,6 +1,9 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import http from 'http';
 import dotenv from 'dotenv';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { pipeline } from 'stream/promises';
 import { env, pipeline as hfPipeline } from '@xenova/transformers';
 dotenv.config();
@@ -9,14 +12,39 @@ dotenv.config();
 env.allowRemoteModels = true;
 env.HF_ACCESS_TOKEN = process.env.HF_API_TOKEN;
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok' }));
-  } else {
-    res.writeHead(404);
-    res.end();
-  }
+  } 
+  // Static file handling
+  const filePath = path.join(
+    __dirname,
+    'public',
+    req.url === '/' ? 'index.html' : req.url
+  );
+
+  try {
+      const data = fs.readFile(filePath);
+      const ext = path.extname(filePath).toLowerCase();
+
+      const contentTypeMap = {
+        '.html': 'text/html',
+        '.js': 'application/javascript',
+        '.css': 'text/css'
+      };
+
+      res.writeHead(200, {
+        'Content-Type': contentTypeMap[ext] || 'text/plain',
+      });
+      res.end(data);
+    } catch (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('404 Not Found');
+    }
 });
 
 const wss = new WebSocketServer({ server });
