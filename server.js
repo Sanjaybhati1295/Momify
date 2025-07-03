@@ -1,13 +1,20 @@
 const WebSocket = require('ws');
 const http = require('http');
 require('dotenv').config();
-const axios = require('axios');
-const { OpenAI } = require('openai');  // npm install openai
-const openai = new OpenAI({ 
-  apiKey: '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'
-});
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
+const { pipeline } = require('@xenova/transformers');
+// Load model once globally
+let summarizer;
+(async () => {
+  try {
+    summarizer = await pipeline('summarization', 'Xenova/bart-large-cnn');
+    console.log('🧠 Summarizer model loaded');
+  } catch (err) {
+    console.error('❌ Failed to load summarizer:', err);
+  }
+})();
+
 
 wss.on('connection', function connection(clientSocket) {
   console.log('🎙 Client connected');
@@ -89,32 +96,26 @@ wss.on('connection', function connection(clientSocket) {
     console.log('socket closed');
     dgSocket.close();
     generateSummary(fullTranscript).then(summary => {
-      console.log('📝 Meeting Summary:', summary);
+      console.log('📝 Meeting Summary: in close', summary);
       clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
     });
   });
 });
 
 async function generateSummary(transcript) {
-  const prompt = `Summarize this meeting:\n\n${transcript}`;
-  const response = await axios.post(
-    'https://api.openai.com/v1/chat/completions',
-    {
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: 'You are a helpful summarizer.' },
-        { role: 'user', content: prompt }
-      ]
-    },
-    {
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    }
-  );
+  if (!summarizer) {
+    console.warn('⚠️ Summarizer not ready yet');
+    return 'Summarizer not ready';
+  }
 
-  return response.data.choices[0].message.content.trim();
+  try {
+    const prompt = `Generate Minutes of Meeting (MoM) from the following transcript:\n\n${transcript}`;
+    const output = await summarizer(prompt);
+    return output[0].summary_text;
+  } catch (err) {
+    console.error('❌ Error summarizing:', err.message || err);
+    return 'Summary generation failed';
+  }
 }
 
 const PORT = process.env.PORT || 3000;
