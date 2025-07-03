@@ -145,7 +145,7 @@ wss.on('connection', function connection(clientSocket) {
 async function generateSummary(transcript) {
   console.log('Generate Summary called');
   const response = await axios.post(
-    'https://api-inference.huggingface.co/models/philschmid/bart-large-cnn-samsum',
+    'https://api-inference.huggingface.co/models/facebook/bart-large-cnn',
     { inputs: transcript },
     {
       headers: {
