@@ -23,5 +23,8 @@
     "node-fetch": "^2.7.0",
     "openai": "^5.8.2",
     "ws": "^8.18.2"
+  },
+  "optionalDependencies": {
+    "sharp": "0.32.6"
   }
 }

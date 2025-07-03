@@ -3,7 +3,12 @@ const http = require('http');
 require('dotenv').config();
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
+const axios = require('axios');
 const { pipeline } = require('@xenova/transformers');
+process.env.NODE_ENV = 'production';
+process.env.TRANSFORMERS_CACHE = './transformers_cache';
+process.env.NODE_DISABLE_IMAGE_SUPPORT = '1';
+
 // Load model once globally
 let summarizer;
 (async () => {
