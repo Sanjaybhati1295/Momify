@@ -1,6 +1,20 @@
-const WebSocket = require('ws');
-const http = require('http');
-require('dotenv').config();
+import { WebSocket } from 'ws';
+import http from 'http';
+import dotenv from 'dotenv';
+import { pipeline } from 'stream/promises';
+import { pipeline as pipelineCb } from 'stream';
+import { promisify } from 'util';
+import { pipeline as pipelineLegacy } from 'stream';
+import { pipeline as nodePipeline } from 'stream';
+import { pipeline as nodePipelineCb } from 'stream';
+import { pipeline as nodePipelineLegacy } from 'stream';
+import { pipeline as nodePipelinePromisify } from 'stream';
+import { pipeline as nodePipelineStream } from 'stream';
+import { pipeline as nodePipelineReadable } from 'stream';
+import { pipeline as nodePipelineDuplex } from 'stream';
+import { pipeline } from '@xenova/transformers';
+dotenv.config();
+
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -10,9 +24,8 @@ const server = http.createServer((req, res) => {
     res.end();
   }
 });
+
 const wss = new WebSocket.Server({ server });
-
-
 wss.on('connection', function connection(clientSocket) {
   console.log('🎙 Client connected');
   let fullTranscript = '';  
@@ -65,8 +78,16 @@ wss.on('connection', function connection(clientSocket) {
         if (parsed.type === 'end') {
           console.log('📴 End message received. Closing Deepgram socket...');
           dgSocket.close();
-          setTimeout(() => {
+          setTimeout(async () => {
             console.log('🔚 Final full transcript:', fullTranscript);
+            try {
+              const summary = await generateSummary(fullTranscript);
+              console.log('📝 MoM Summary:', summary);
+              clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
+            } catch (err) {
+              console.error('❌ Summary generation error:', err);
+              clientSocket.send(JSON.stringify({ type: 'summary', text: 'Failed to generate summary.' }));
+            }
           }, 1000);
           return;
         }
@@ -87,6 +108,13 @@ wss.on('connection', function connection(clientSocket) {
     dgSocket.close();
   });
 });
+
+
+const summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-12-6'); // or any other MoM-focused model
+async function generateSummary(transcript) {
+  const output = await summarizer(transcript, { max_new_tokens: 100 });
+  return output[0].summary_text;
+}
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
