@@ -2,8 +2,12 @@ import WebSocket, { WebSocketServer } from 'ws';
 import http from 'http';
 import dotenv from 'dotenv';
 import { pipeline } from 'stream/promises';
-import { pipeline as hfPipeline } from '@xenova/transformers';
+import { env, pipeline as hfPipeline } from '@xenova/transformers';
 dotenv.config();
+
+// Set token from environment variable
+env.allowRemoteModels = true;
+env.HF_ACCESS_TOKEN = process.env.HF_API_TOKEN;
 
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
