@@ -3,18 +3,6 @@ const http = require('http');
 require('dotenv').config();
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
-const axios = require('axios');
-import { pipeline } from '@xenova/transformers';
-let summarizer;
-
-export async function loadSummarizerModel() {
-  console.log('⏳ Loading summarization model...');
-  summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-12-6');
-  console.log('✅ Summarization model loaded.');
-}
-
-(async () => {
-await loadSummarizerModel(); 
 
 
 wss.on('connection', function connection(clientSocket) {
@@ -22,13 +10,9 @@ wss.on('connection', function connection(clientSocket) {
   let fullTranscript = '';  
   // Connect to Deepgram
   const dgSocket = new WebSocket(
-    'wss://api.deepgram.com/v1/listen',
-    [],
-    {
-      headers: {
+    'wss://api.deepgram.com/v1/listen',[],{headers: {
         Authorization: 'Token e0c027bfdf8c501bdafb7b30ec02046db652a315',
-      }
-    }
+     }}
   );
 
   dgSocket.on('open', () => {
@@ -65,39 +49,26 @@ wss.on('connection', function connection(clientSocket) {
   clientSocket.on('message', (msg) => {
     try {
       let messageString = msg;
-  
       if (Buffer.isBuffer(msg)) {
         messageString = msg.toString('utf8'); // Convert buffer to string
       }
-  
-      console.log('message from client ::', messageString);
-  
       try {
         const parsed = JSON.parse(messageString);
-  
-        // If it's a control message like end
         if (parsed.type === 'end') {
           console.log('📴 End message received. Closing Deepgram socket...');
           dgSocket.close();
-  
           setTimeout(() => {
             console.log('🔚 Final full transcript:', fullTranscript);
-            const summary = await generateSummary(fullTranscript);
-            console.log('📝 Meeting Summary:', summary);
-            clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
           }, 1000);
-  
-          return; // stop processing
+          return;
         }
       } catch (jsonErr) {
-        // Not JSON => treat as audio buffer
+        
       }
-  
       if (Buffer.isBuffer(msg)) {
         console.log('📦 Sending buffer to Deepgram:', msg.length);
         dgSocket.send(msg);
       }
-  
     } catch (err) {
       console.error('❌ Error in clientSocket.on(message):', err);
     }
@@ -109,16 +80,6 @@ wss.on('connection', function connection(clientSocket) {
   });
 });
 
-export async function generateSummary(text) {
-  if (!summarizer) {
-    throw new Error('Summarizer model not loaded.');
-  }
-
-  const result = await summarizer(text);
-  return result[0].summary_text;
-}
-
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
-})();
