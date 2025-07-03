@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "build": "echo 'No build step required'"
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -23,8 +22,5 @@
     "node-fetch": "^2.7.0",
     "openai": "^5.8.2",
     "ws": "^8.18.2"
-  },
-  "optionalDependencies": {
-    "sharp": "0.32.6"
   }
 }
