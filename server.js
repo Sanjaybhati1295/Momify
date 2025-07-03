@@ -99,13 +99,17 @@ wss.on('connection', function connection(clientSocket) {
 });
 
 
-const summarizer = await hfPipeline('summarization', 'Xenova/t5-small'); // or any other MoM-focused model
+const summarizer = await hfPipeline('summarization', 'Xenova/flan-t5-large'); // or any other MoM-focused model
 async function generateSummary(transcript) {
-  const prompt = `Meeting Transcript: ${transcript}
-  Generate a structured meeting summary with the following format:
-  1. Key Points Discussed
-  2. Decisions Made
-  3. Action Items (with owners if mentioned)`;
+  const prompt = `
+  Transcript:
+  ${transcript}
+
+  Write a meeting summary covering:
+  - Key discussion points
+  - Decisions taken
+  - Action items with ownership
+  `.trim();
   const output = await summarizer(prompt, {
     max_new_tokens: 200, // increase to allow better detail
     temperature: 0.7,     // optional: helps with variation
