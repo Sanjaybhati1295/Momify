@@ -46,11 +46,8 @@ wss.on('connection', function connection(clientSocket) {
 
   dgSocket.on('message', (message) => {
     try {
-      console.log('message in deepgram '+message);
       const data = JSON.parse(message);
-      console.log('data in deepgram '+data);
       const transcript = data.channel?.alternatives?.[0]?.transcript;
-      console.log('transcript in deepgram '+transcript);
       if (transcript && transcript.length > 0) {
         if (data.is_final) {
           fullTranscript += transcript + ' ';
@@ -97,14 +94,11 @@ wss.on('connection', function connection(clientSocket) {
   clientSocket.on('close', () => {
     console.log('socket closed');
     dgSocket.close();
-    generateSummary(fullTranscript).then(summary => {
-      console.log('📝 Meeting Summary: in close', summary);
-      clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
-    });
   });
 });
 
 async function generateSummary(transcript) {
+  console.log('Generate Summary called');
   const response = await axios.post(
     'https://api-inference.huggingface.co/models/philschmid/bart-large-cnn-samsum',
     { inputs: transcript },
