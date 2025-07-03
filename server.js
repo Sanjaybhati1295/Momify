@@ -2,17 +2,7 @@ import { WebSocket } from 'ws';
 import http from 'http';
 import dotenv from 'dotenv';
 import { pipeline } from 'stream/promises';
-import { pipeline as pipelineCb } from 'stream';
-import { promisify } from 'util';
-import { pipeline as pipelineLegacy } from 'stream';
-import { pipeline as nodePipeline } from 'stream';
-import { pipeline as nodePipelineCb } from 'stream';
-import { pipeline as nodePipelineLegacy } from 'stream';
-import { pipeline as nodePipelinePromisify } from 'stream';
-import { pipeline as nodePipelineStream } from 'stream';
-import { pipeline as nodePipelineReadable } from 'stream';
-import { pipeline as nodePipelineDuplex } from 'stream';
-import { pipeline } from '@xenova/transformers';
+import { pipeline as hfPipeline } from '@xenova/transformers';
 dotenv.config();
 
 const server = http.createServer((req, res) => {
@@ -110,7 +100,7 @@ wss.on('connection', function connection(clientSocket) {
 });
 
 
-const summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-12-6'); // or any other MoM-focused model
+const summarizer = await hfPipeline('summarization', 'Xenova/distilbart-cnn-12-6'); // or any other MoM-focused model
 async function generateSummary(transcript) {
   const output = await summarizer(transcript, { max_new_tokens: 100 });
   return output[0].summary_text;
