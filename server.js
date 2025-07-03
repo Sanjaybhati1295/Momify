@@ -1,4 +1,4 @@
-import { WebSocket } from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 import http from 'http';
 import dotenv from 'dotenv';
 import { pipeline } from 'stream/promises';
@@ -15,7 +15,7 @@ const server = http.createServer((req, res) => {
   }
 });
 
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocketServer({ server });
 wss.on('connection', function connection(clientSocket) {
   console.log('🎙 Client connected');
   let fullTranscript = '';  
