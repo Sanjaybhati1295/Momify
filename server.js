@@ -29,22 +29,24 @@ const server = http.createServer((req, res) => {
   );
 
   try {
-      const data = fs.readFile(filePath);
-      const ext = path.extname(filePath).toLowerCase();
+    const data = fs.readFile(filePath);
+    const ext = path.extname(filePath).toLowerCase();
 
-      const contentTypeMap = {
-        '.html': 'text/html',
-        '.js': 'application/javascript',
-        '.css': 'text/css'
-      };
+    const contentTypeMap = {
+      '.html': 'text/html',
+      '.js': 'application/javascript',
+      '.css': 'text/css'
+    };
 
-      res.writeHead(200, {
-        'Content-Type': contentTypeMap[ext] || 'text/plain',
-      });
-      res.end(data);
+    res.writeHead(200, {
+      'Content-Type': contentTypeMap[ext] || 'text/plain',
+    });
+    res.end(data);
     } catch (err) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('404 Not Found');
+      if (!res.headersSent) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('404 Not Found');
+      }
     }
 });
 
