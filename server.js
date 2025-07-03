@@ -3,6 +3,8 @@ const http = require('http');
 require('dotenv').config();
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
+const axios = require('axios');
+
 /*const { pipeline } = require('@xenova/transformers');
 // Load model once globally
 let summarizer;
@@ -75,7 +77,7 @@ wss.on('connection', function connection(clientSocket) {
         const parsed = JSON.parse(msg.toString());
         if (parsed.type === 'end') {
           dgSocket.close();
-          /*setTimeout(() => {
+          setTimeout(() => {
             console.log('🔚 Final full transcript:', fullTranscript);
             generateSummary(fullTranscript).then(summary => {
               console.log('📝 Meeting Summary:', summary);
@@ -83,8 +85,8 @@ wss.on('connection', function connection(clientSocket) {
             }).catch(err => {
               console.error('❌ Summary generation error:', err);
               clientSocket.send(JSON.stringify({ type: 'summary', text: 'Failed to generate summary' }));
-            });*
-          }, 1000);*/
+            });
+          }, 1000);
         }
       } catch (e) {
         console.warn('⚠️ Non-binary message:', msg.toString());
@@ -95,12 +97,27 @@ wss.on('connection', function connection(clientSocket) {
   clientSocket.on('close', () => {
     console.log('socket closed');
     dgSocket.close();
-    /*generateSummary(fullTranscript).then(summary => {
+    generateSummary(fullTranscript).then(summary => {
       console.log('📝 Meeting Summary: in close', summary);
       clientSocket.send(JSON.stringify({ type: 'summary', text: summary }));
-    });*/
+    });
   });
 });
+
+async function generateSummary(transcript) {
+  const response = await axios.post(
+    'https://api-inference.huggingface.co/models/philschmid/bart-large-cnn-samsum',
+    { inputs: transcript },
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.HF_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  return response.data[0]?.summary_text || 'Summary not available';
+}
 
 /* async function generateSummary(transcript) {
   if (!summarizer) {
