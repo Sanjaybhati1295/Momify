@@ -12,6 +12,8 @@ export async function loadSummarizerModel() {
   summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-12-6');
   console.log('✅ Summarization model loaded.');
 }
+
+(async () => {
 await loadSummarizerModel(); 
 
 
@@ -118,3 +120,5 @@ export async function generateSummary(text) {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+})();
