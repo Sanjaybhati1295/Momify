@@ -15,32 +15,39 @@ env.HF_ACCESS_TOKEN = process.env.HF_API_TOKEN;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const server = http.createServer((req, res) => {
+const server =  http.createServer(async (req, res) => {
+  // Health check
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok' }));
     return;
-  } 
-  
-  let filePath = path.join(__dirname, 'public', req.url === '/' ? 'index.html' : req.url);
-  let ext = path.extname(filePath).toLowerCase();
+  }
 
-  let contentType = {
+  console.log('req.url ->', req.url);
+
+  const filePath = req.url === '/'
+    ? path.join(__dirname, 'public', 'index.html')
+    : path.join(__dirname, 'public', req.url);
+
+  console.log('filePath ->', filePath);
+
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = {
     '.html': 'text/html',
-    '.css': 'text/css',
     '.js': 'application/javascript',
-  }[ext] || 'text/plain';
+    '.css': 'text/css',
+  }[ext] || 'application/octet-stream';
 
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end('404 Not Found');
-      return;
-    }
-
+  try {
+    const content = await fs.readFile(filePath);
+    console.log('✅ File read successfully');
     res.writeHead(200, { 'Content-Type': contentType });
-    res.end(data);
-  });
+    res.end(content);
+  } catch (err) {
+    console.error('❌ File read error:', err.message);
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('404 Not Found');
+  }
 });
 
 const wss = new WebSocketServer({ server });
